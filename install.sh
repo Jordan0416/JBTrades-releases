@@ -11,6 +11,15 @@ if [ ! -w "$DEST" ]; then
   DEST="$HOME/Applications"
   mkdir -p "$DEST"
 fi
+# Quit any running copy first — otherwise `open` would just re-focus the old
+# process instead of launching the freshly installed version.
+if pgrep -x JBTrades >/dev/null 2>&1; then
+  echo "Closing the running JBTrades..."
+  osascript -e 'tell application "JBTrades" to quit' >/dev/null 2>&1 || true
+  sleep 1
+  pkill -x JBTrades 2>/dev/null || true
+  sleep 1
+fi
 rm -rf "$DEST/JBTrades.app"
 ditto "$TMP/JBTrades/JBTrades.app" "$DEST/JBTrades.app"
 xattr -dr com.apple.quarantine "$DEST/JBTrades.app" 2>/dev/null || true
@@ -20,4 +29,4 @@ codesign --force --deep --sign - "$DEST/JBTrades.app" 2>/dev/null || true
 VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$DEST/JBTrades.app/Contents/Info.plist" 2>/dev/null || echo "?")
 open "$DEST/JBTrades.app"
 echo "Done — JBTrades $VERSION installed in $DEST and launching now."
-echo "Next: connect your Alpaca paper keys (see the app's README) and create a login."
+echo "Check the bottom of the app's sidebar: it should say v$VERSION."
